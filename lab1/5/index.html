@@ -204,8 +204,104 @@
 </ul>
 <h2 id="_2">Выполнение:</h2>
 <p>Храним оценки словарем в памяти, на лету формируем HTML из захардкоженных частей, юзер получает страницу и дальше может взаимодействовать только с ней, отправляя POST-запросы с данными формы. Чтобы потыкать (после запуска сервера): <a href="http://localhost:8080/">тык</a> </p>
-<p><a href="../../Lr1/5/server.py">server</a></p>
-<pre><code class="language-bash">python3 server.py
+<pre><code class="language-python"># Lr1/5/server.py
+import socket
+import urllib.parse
+
+grades = {}
+
+
+def handle_client(client_socket):
+    request_data = client_socket.recv(1024).decode()
+    if not request_data:
+        client_socket.close()
+        return
+
+    request_lines = request_data.split('\r\n')
+    request_line = request_lines[0]
+    method, path, version = request_line.split()
+
+    if method == 'POST':
+        try:
+            empty_line_index = request_lines.index('')
+        except ValueError:
+            client_socket.close()
+            return
+
+        headers = request_lines[1:empty_line_index]
+        body = '\r\n'.join(request_lines[empty_line_index + 1:])
+
+        content_length = 0
+        for header in headers:
+            if header.startswith('Content-Length'):
+                content_length = int(header.split(':')[1].strip())
+                break
+
+        # if body is incomplete, read the rest
+        while len(body.encode()) &lt; content_length:
+            body += client_socket.recv(1024).decode()
+
+        # parse the body (assuming application/x-www-form-urlencoded)
+        params = urllib.parse.parse_qs(body)
+
+        # store the subject and grade
+        subject = params.get('subject', [''])[0]
+        grade = params.get('grade', [''])[0]
+        if subject and grade:
+            grades[subject] = grade
+
+        response = 'HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n'
+        response += '&lt;html&gt;&lt;body&gt;&lt;h1&gt;Data Received&lt;/h1&gt;'
+        response += f'&lt;p&gt;Subject: {subject}&lt;/p&gt;'
+        response += f'&lt;p&gt;Grade: {grade}&lt;/p&gt;'
+        response += '&lt;p&gt;&lt;a href=&quot;/&quot;&gt;Go back&lt;/a&gt;&lt;/p&gt;'
+        response += '&lt;/body&gt;&lt;/html&gt;'
+        client_socket.sendall(response.encode())
+
+    elif method == 'GET':
+        html_content = '&lt;html&gt;&lt;body&gt;&lt;h1&gt;Grades&lt;/h1&gt;'
+        if grades:
+            html_content += '&lt;ul&gt;'
+            for subject, grade in grades.items():
+                html_content += f'&lt;li&gt;{subject}: {grade}&lt;/li&gt;'
+            html_content += '&lt;/ul&gt;'
+        else:
+            html_content += '&lt;p&gt;No grades available.&lt;/p&gt;'
+
+        html_content += '''
+            &lt;h2&gt;Add New Grade&lt;/h2&gt;
+            &lt;form method=&quot;POST&quot; action=&quot;/&quot;&gt;
+                Subject: &lt;input type=&quot;text&quot; name=&quot;subject&quot;&gt;&lt;br&gt;
+                Grade: &lt;input type=&quot;text&quot; name=&quot;grade&quot;&gt;&lt;br&gt;
+                &lt;input type=&quot;submit&quot; value=&quot;Submit&quot;&gt;
+            &lt;/form&gt;
+        '''
+        html_content += '&lt;/body&gt;&lt;/html&gt;'
+
+        response = 'HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n' + html_content
+        client_socket.sendall(response.encode())
+
+    else:
+        response = 'HTTP/1.1 405 Method Not Allowed\r\n\r\n'
+        client_socket.sendall(response.encode())
+
+    client_socket.close()
+
+
+def run_server():
+    server_address = ('', 8080)
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.bind(server_address)
+    server_socket.listen(5)
+    print('Server is running on port 8080...')
+
+    while True:
+        client_socket, client_address = server_socket.accept()
+        handle_client(client_socket)
+
+
+if __name__ == '__main__':
+    run_server()
 </code></pre></p>
     </article>
 </section>

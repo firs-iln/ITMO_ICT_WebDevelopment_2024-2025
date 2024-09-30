@@ -204,11 +204,57 @@
 </ul>
 <h3 id="_2">Выполнение</h3>
 <p>Почти то же, что и в предыдущем задании, за исключением TCP</p>
-<p><a href="../../Lr1/2/server.py">server</a></p>
-<pre><code class="language-bash">python3 server.py
+<pre><code class="language-python"># Lr1/2/server.py
+import socket
+
+
+def calculate_trapezoid_area(a, b, h):
+    return ((a + b) / 2) * h
+
+
+server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server_address = ('localhost', 65432)
+server_socket.bind(server_address)
+server_socket.listen(1)
+
+print(&quot;Server is running and waiting for connection...&quot;)
+
+while True:
+    connection, client_address = server_socket.accept()
+    try:
+        print(f&quot;Connected client: {client_address}&quot;)
+
+        data = connection.recv(1024).decode()
+        print(f&quot;Received data: {data}&quot;)
+
+        a, b, h = map(float, data.split(', '))
+
+        area = calculate_trapezoid_area(a, b, h)
+
+        connection.sendall(str(area).encode())
+    finally:
+        connection.close()
 </code></pre>
-<p><a href="../../Lr1/2/client.py">client</a></p>
-<pre><code class="language-bash">python3 server.py
+<pre><code class="language-python"># Lr1/2/client.py
+import socket
+
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server_address = ('localhost', 65432)
+client_socket.connect(server_address)
+
+try:
+    print(&quot;Enter trapezoid parameters:&quot;)
+    a = float(input(&quot;Enter the first base (a): &quot;))
+    b = float(input(&quot;Enter the second base (b): &quot;))
+    h = float(input(&quot;Enter the height (h): &quot;))
+
+    message = f&quot;{a}, {b}, {h}&quot;
+    client_socket.sendall(message.encode())
+
+    result = client_socket.recv(1024).decode()
+    print(f&quot;Trapezoid area: {result}&quot;)
+finally:
+    client_socket.close()
 </code></pre></p>
     </article>
 </section>

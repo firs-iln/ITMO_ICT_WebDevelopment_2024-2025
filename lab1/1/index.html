@@ -203,11 +203,35 @@
 <li>Реализовать с помощью протокола UDP.</li>
 </ul>
 <h3 id="_2">Выполнение</h3>
-<p><a href="../../Lr1/1/server.py">server</a></p>
-<pre><code class="language-bash">python3 server.py
+<pre><code class="language-python"># Lr1/1/server.py
+import socket
+
+server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+server_address = ('localhost', 12345)
+server_socket.bind(server_address)
+
+print(&quot;Server started and waiting for clients...&quot;)
+
+while True:
+    message, client_address = server_socket.recvfrom(1024)
+    print(f&quot;Message from client: {message.decode()}&quot;)
+
+    response = &quot;Hello, client&quot;
+    server_socket.sendto(response.encode(), client_address)
 </code></pre>
-<p><a href="../../Lr1/1/client.py">client</a></p>
-<pre><code class="language-bash">python3 server.py
+<pre><code class="language-python"># Lr1/1/server.py
+import socket
+
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+server_address = ('localhost', 12345)
+
+message = &quot;Hello, server&quot;
+client_socket.sendto(message.encode(), server_address)
+
+response, server = client_socket.recvfrom(1024)
+print(f&quot;Server response: {response.decode()}&quot;)
+
+client_socket.close()
 </code></pre></p>
     </article>
 </section>
