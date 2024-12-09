@@ -15,26 +15,28 @@
         </div>
 
         <!-- Passengers Table -->
-        <h3>Passengers</h3>
-        {% if passengers %}
-            <table class="passenger-table">
-                <thead>
-                <tr>
-                    <th>Passenger</th>
-                    <th>Seat Number</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for passenger in passengers %}
+        {% if is_staff %}
+            <h3>Passengers</h3>
+            {% if passengers %}
+                <table class="passenger-table">
+                    <thead>
                     <tr>
-                        <td>{{ passenger.user.username }}</td>
-                        <td>{{ passenger.seat_number }}</td>
+                        <th>Passenger</th>
+                        <th>Seat Number</th>
                     </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        {% else %}
-            <p>No passengers registered for this flight yet.</p>
+                    </thead>
+                    <tbody>
+                    {% for passenger in passengers %}
+                        <tr>
+                            <td>{{ passenger.user.username }}</td>
+                            <td>{{ passenger.seat_number }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No passengers registered for this flight yet.</p>
+            {% endif %}
         {% endif %}
 
         <!-- Reviews Section -->

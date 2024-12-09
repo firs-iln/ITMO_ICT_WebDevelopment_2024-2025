@@ -1,11 +1,9 @@
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render, redirect, get_object_or_404
-from django.views.generic import ListView
 
-from .models import Flight, Review, Reservation
+from .models import Flight, Review
 
 
 def signup(request):
@@ -35,16 +33,22 @@ def add_review(request, flight_id):
     return render(request, 'add_review.html', {'flight': flight})
 
 
+@login_required
 def flight_details(request, flight_id):
     flight = get_object_or_404(Flight, id=flight_id)
-    passengers = Reservation.objects.filter(flight=flight)
+
+    if is_user_staff := request.user.is_staff:
+        passengers = Reservation.objects.filter(flight=flight)
+
     reviews = Review.objects.filter(flight=flight)
     user_reservation = None
     if request.user.is_authenticated:
         user_reservation = Reservation.objects.filter(flight=flight, user=request.user).first()
+
     return render(request, 'flight_details.html', {
         'flight': flight,
-        'passengers': passengers,
+        'passengers': passengers if is_user_staff else None,
+        'is_staff': is_user_staff,
         'reviews': reviews,
         'user_reservation': user_reservation,
     })
@@ -74,6 +78,8 @@ class MyReservationsView(LoginRequiredMixin, ListView):
             )
 
         return queryset
+
+
 def edit_reservation(request, reservation_id):
     """Edit a specific reservation for the logged-in user."""
     reservation = get_object_or_404(Reservation, id=reservation_id, user=request.user)
