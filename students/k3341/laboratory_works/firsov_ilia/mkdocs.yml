@@ -8,5 +8,6 @@ nav:
       - Task 4: lab1/4.md
       - Task 5: lab1/5.md
   - Lab 2: lab2/index.md
+  - Lab 4: lab4/index.md
 theme:
   name: dracula

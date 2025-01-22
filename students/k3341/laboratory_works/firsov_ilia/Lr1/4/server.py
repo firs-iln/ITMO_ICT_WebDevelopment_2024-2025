@@ -1,7 +1,7 @@
 import socket
 import threading
 
-clients = []
+clients: list[socket.socket] = []
 
 
 def connect_client(client_socket, client_address):
@@ -35,15 +35,21 @@ def broadcast(message, sender_socket):
 
 
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server_address = ('localhost', 5555)
+server_address = ('localhost', 5551)
 server_socket.bind(server_address)
 server_socket.listen(5)
 
 print("Server is running and waiting for connections...")
 
-while True:
-    client_socket, client_address = server_socket.accept()
+try:
+    while True:
+        client_socket, client_address = server_socket.accept()
 
-    # start a new thread for each client
-    client_thread = threading.Thread(target=connect_client, args=(client_socket, client_address))
-    client_thread.start()
+        # start a new thread for each client
+        client_thread = threading.Thread(target=connect_client, args=(client_socket, client_address))
+        client_thread.start()
+except KeyboardInterrupt:
+    print("Exiting")
+    for s in clients:
+        s.close()
+    server_socket.close()

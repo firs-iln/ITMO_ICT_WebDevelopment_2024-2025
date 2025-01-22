@@ -41,7 +41,10 @@ def handle_client(client_socket):
         subject = params.get('subject', [''])[0]
         grade = params.get('grade', [''])[0]
         if subject and grade:
-            grades[subject] = grade
+            if subject not in grades:
+                grades[subject] = []
+
+            grades[subject].append(grade)
 
         response = 'HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n'
         response += '<html><body><h1>Data Received</h1>'
@@ -55,8 +58,8 @@ def handle_client(client_socket):
         html_content = '<html><body><h1>Grades</h1>'
         if grades:
             html_content += '<ul>'
-            for subject, grade in grades.items():
-                html_content += f'<li>{subject}: {grade}</li>'
+            for subject, subject_grade in grades.items():
+                html_content += f'<li>{subject}: {", ".join(map(str, subject_grade))}</li>'
             html_content += '</ul>'
         else:
             html_content += '<p>No grades available.</p>'
@@ -82,11 +85,12 @@ def handle_client(client_socket):
 
 
 def run_server():
-    server_address = ('', 8080)
+    server_address = ('', 8081)
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind(server_address)
     server_socket.listen(5)
-    print('Server is running on port 8080...')
+    print(f'Server is running on port {server_address[1]}...')
+    print(f"http://localhost:{server_address[1]}/")
 
     while True:
         client_socket, client_address = server_socket.accept()
